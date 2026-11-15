@@ -35,15 +35,8 @@
   .note { margin-top: 16px; font-size: 12px; color: var(--muted); max-width: 440px; line-height: 1.5; }
 
   #play { padding: 0; }
-  /* the stage turns with the phone, so the game works even with rotation lock on */
-  #stage { position: absolute; left: 50%; top: 50%; width: 100vw; height: 100vh;
-    transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; text-align: center; }
-  #stage.r90, #stage.rm90 { width: 100vh; height: 100vw; }
-  #stage.r90 { transform: translate(-50%, -50%) rotate(90deg); }
-  #stage.rm90 { transform: translate(-50%, -50%) rotate(-90deg); }
-  #card { font-family: Fredoka, sans-serif; font-weight: 700; font-size: clamp(34px, 10vw, 96px);
-    line-height: 1.05; padding: 0 6%; max-width: 100%; word-wrap: break-word; }
-  #stage.r90 #card, #stage.rm90 #card { font-size: clamp(34px, 10vh, 96px); }
+  #card { font-family: Fredoka, sans-serif; font-weight: 700; font-size: clamp(36px, 11vw, 96px);
+    line-height: 1.05; padding: 0 6vw; max-width: 100%; word-wrap: break-word; }
   #cat { position: absolute; top: 14px; left: 0; right: 0; font-size: 13px; letter-spacing: .15em;
     text-transform: uppercase; color: var(--gold); }
   #timer { position: absolute; top: 10px; right: 18px; font: 700 30px Fredoka, sans-serif; color: var(--gold); }
@@ -79,25 +72,23 @@
     <button class="chip" data-t="90">90s</button>
   </div>
   <button class="btn" id="go">Start</button>
-  <p class="note">Prototype. Tap the right half for <b>Correct</b>, the left half for <b>Pass</b>. Tilt down for <b>Correct</b>, up for <b>Pass</b>. Works upright or sideways, even with screen rotation locked. Tilting works only on the game's own website, not inside the Claude preview.</p>
+  <p class="note">Prototype. Tap the right half for <b>Correct</b>, the left half for <b>Pass</b>. Hold the phone upright: tilt down for <b>Correct</b>, up for <b>Pass</b>. Tilting works only on the game's own website, not inside the Claude preview.</p>
 </section>
 
 <!-- GET READY -->
 <section id="ready" class="screen">
   <div id="count">3</div>
-  <div id="ready-text">Hold the phone to your forehead, upright or sideways</div>
+  <div id="ready-text">Hold the phone upright to your forehead, screen facing your friends</div>
 </section>
 
 <!-- PLAY -->
 <section id="play" class="screen">
-  <div id="stage">
-    <div id="score">0</div>
-    <div id="cat"></div>
-    <div id="timer">60</div>
-    <div id="card"></div>
-    <div class="zone l">◀ Pass</div>
-    <div class="zone r">Correct ▶</div>
-  </div>
+  <div id="score">0</div>
+  <div id="cat"></div>
+  <div id="timer">60</div>
+  <div id="card"></div>
+  <div class="zone l">◀ Pass</div>
+  <div class="zone r">Correct ▶</div>
 </section>
 
 <!-- RESULTS -->
@@ -201,20 +192,10 @@ async function askMotion() {
     } else tiltReady = 'DeviceMotionEvent' in window;
   } catch (e) { tiltReady = false; }
 }
-// which way is "up" for the phone: turn the stage to match, regardless of the screen-rotation setting
-let rot = 0;
-function setRot(r) {
-  if (r === rot) return; rot = r;
-  $('stage').classList.toggle('r90', r === 90); $('stage').classList.toggle('rm90', r === -90);
-}
 window.addEventListener('devicemotion', e => {
-  if (!tiltReady || !e.accelerationIncludingGravity) return;
-  let { x, y, z } = e.accelerationIncludingGravity; if (z == null) return;
-  if (isIOS) { x = -x; y = -y; z = -z; }          // iOS reports the opposite sign
-  const viewportPortrait = window.innerHeight > window.innerWidth;
-  if (viewportPortrait && Math.abs(x) > 6 && Math.abs(y) < 4) setRot(x > 0 ? 90 : -90);  // phone held sideways, screen stayed portrait
-  else if (Math.abs(y) > 6 || !viewportPortrait) setRot(0);
-  if (!playing) return;
+  if (!playing || !tiltReady || !e.accelerationIncludingGravity) return;
+  let z = e.accelerationIncludingGravity.z; if (z == null) return;
+  if (isIOS) z = -z;                              // iOS reports the opposite sign
   if (Math.abs(z) < 3) { neutral = true; return; }
   if (!neutral) return;
   if (z < -6) { neutral = false; mark(true); }    // screen toward floor → correct
@@ -222,12 +203,7 @@ window.addEventListener('devicemotion', e => {
 });
 
 // taps
-$('play').addEventListener('pointerdown', e => {
-  if (!playing) return;
-  // "right half" of the stage, mapped back to the screen when the stage is turned
-  const good = rot === 90 ? e.clientY > window.innerHeight / 2 : rot === -90 ? e.clientY < window.innerHeight / 2 : e.clientX > window.innerWidth / 2;
-  mark(good);
-});
+$('play').addEventListener('pointerdown', e => { if (!playing) return; mark(e.clientX > window.innerWidth / 2); });
 
 function mark(good) {
   if (lock || !playing) return; lock = true;
