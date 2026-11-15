@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Starring You – game prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1d1033; --bg2: #2c1650; --gold: #ffcf4a; --pink: #ff6fa8;
+    --good: #2ecc71; --pass: #ff9f43; --ink: #fff7e8; --muted: #c9b8e6;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  .screen { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center;
+    justify-content: center; padding: 24px; text-align: center;
+    background: radial-gradient(circle at 50% 30%, var(--bg2), var(--bg) 70%); }
+  .screen.on { display: flex; }
+  .brand { font-family: Fredoka, sans-serif; letter-spacing: .18em; font-size: 13px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 10px; }
+  .brand::before, .brand::after { content: "★"; margin: 0 8px; }
+  h1 { font-family: Fredoka, sans-serif; font-weight: 700; font-size: clamp(30px, 7vw, 56px); margin: 0 0 6px; line-height: 1.05; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 15px; }
+  .cats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 18px; max-width: 520px; }
+  .chip { border: 2px solid var(--muted); color: var(--ink); background: transparent; border-radius: 999px;
+    padding: 9px 16px; font: 600 14px Inter, sans-serif; cursor: pointer; }
+  .chip.sel { background: var(--gold); border-color: var(--gold); color: #2a1240; }
+  .row { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 22px; color: var(--muted); font-size: 14px; }
+  .btn { background: var(--pink); color: #fff; border: 0; border-radius: 16px; padding: 16px 40px;
+    font: 700 20px Fredoka, sans-serif; cursor: pointer; box-shadow: 0 6px 0 #c2437a; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #c2437a; }
+  .btn.ghost { background: transparent; box-shadow: none; border: 2px solid var(--muted); color: var(--ink); font-size: 16px; padding: 12px 24px; }
+  .note { margin-top: 16px; font-size: 12px; color: var(--muted); max-width: 440px; line-height: 1.5; }
+
+  #play { padding: 0; }
+  #card { font-family: Fredoka, sans-serif; font-weight: 700; font-size: clamp(36px, 11vw, 96px);
+    line-height: 1.05; padding: 0 6vw; max-width: 100%; word-wrap: break-word; }
+  #cat { position: absolute; top: 14px; left: 0; right: 0; font-size: 13px; letter-spacing: .15em;
+    text-transform: uppercase; color: var(--gold); }
+  #timer { position: absolute; top: 10px; right: 18px; font: 700 30px Fredoka, sans-serif; color: var(--gold); }
+  #timer.low { color: var(--pink); }
+  #score { position: absolute; top: 14px; left: 18px; font: 600 16px Inter; color: var(--muted); }
+  .zone { position: absolute; bottom: 0; top: 0; width: 50%; display: flex; align-items: flex-end;
+    justify-content: center; padding-bottom: 14px; font: 600 13px Inter; color: var(--muted); opacity: .8; }
+  .zone.l { left: 0; } .zone.r { right: 0; }
+  #play.flash-good { background: var(--good); } #play.flash-pass { background: var(--pass); }
+  #count { font: 700 120px Fredoka, sans-serif; color: var(--gold); }
+  #ready-text { font: 600 18px Inter; color: var(--muted); margin-top: 6px; max-width: 420px; }
+
+  #results ul { list-style: none; padding: 0; margin: 0 0 22px; max-height: 50vh; overflow-y: auto; width: min(520px, 100%); }
+  #results li { padding: 9px 14px; margin: 5px 0; border-radius: 10px; font: 600 17px Inter; text-align: left; }
+  #results li.g { background: rgba(46,204,113,.18); border-left: 5px solid var(--good); }
+  #results li.p { background: rgba(255,159,67,.14); border-left: 5px solid var(--pass); color: var(--muted); }
+  .big { font: 700 64px Fredoka, sans-serif; color: var(--gold); margin: 0; line-height: 1; }
+  .btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  #survey .opts { display: flex; flex-direction: column; gap: 10px; width: min(360px, 100%); margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<!-- START -->
+<section id="start" class="screen on">
+  <div class="brand">Starring You</div>
+  <h1>Em's Bachelorette Game</h1>
+  <p class="sub">Put the phone on your forehead. Your friends describe the word. Guess as many as you can!</p>
+  <div class="cats" id="cats"></div>
+  <div class="row">Round:
+    <button class="chip" data-t="30">30s</button>
+    <button class="chip sel" data-t="60">60s</button>
+    <button class="chip" data-t="90">90s</button>
+  </div>
+  <button class="btn" id="go">Start</button>
+  <p class="note">Prototype. Tap the right half for <b>Correct</b>, the left half for <b>Pass</b>. Tilting works only when the game runs on its own website, not inside the Claude preview.</p>
+</section>
+
+<!-- GET READY -->
+<section id="ready" class="screen">
+  <div id="count">3</div>
+  <div id="ready-text">Turn the phone sideways and hold it to your forehead</div>
+</section>
+
+<!-- PLAY -->
+<section id="play" class="screen">
+  <div id="score">0</div>
+  <div id="cat"></div>
+  <div id="timer">60</div>
+  <div id="card"></div>
+  <div class="zone l">◀ Pass</div>
+  <div class="zone r">Correct ▶</div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="screen">
+  <div class="brand">Time's up</div>
+  <p class="big" id="res-score">0</p>
+  <p class="sub" id="res-sub">correct</p>
+  <ul id="res-list"></ul>
+  <div class="btns">
+    <button class="btn" id="next">Next player</button>
+    <button class="btn ghost" id="finish">Finish</button>
+  </div>
+</section>
+
+<!-- SURVEY -->
+<section id="survey" class="screen">
+  <div class="brand">One quick question</div>
+  <h1 style="font-size:28px">How much would you pay for a game like this?</h1>
+  <p class="sub">Free during beta. Your answer helps us decide.</p>
+  <div class="opts" id="opts"></div>
+</section>
+
+<!-- END -->
+<section id="end" class="screen">
+  <div class="brand">Starring You</div>
+  <h1>Thanks for playing!</h1>
+  <p class="sub">Make a game about someone you love, in 3 minutes.</p>
+  <div class="btns">
+    <button class="btn" id="make">Make one for your next party</button>
+    <button class="btn ghost" id="again">Play again</button>
+  </div>
+  <p class="note" id="end-note"></p>
+</section>
+
+<script>
+const DECK = {
+  "All about Em": ["Josh","Lily","Mr. Whiskers","Dana","Oat milk latte","Taylor Swift","Paris","Grey's Anatomy",
+    "I'll just have one drink","Josh's proposal","The engagement ring","College dorm","Em's playlist","Houseplants",
+    "Sunday brunch","Em's car","The wedding dress","Bridesmaids","Em's mom","Road trip","Em's hometown",
+    "Yoga class","Lily's wedding toast","Em's cat videos","Karaoke night"],
+  "Inside jokes": ["The Paris goat farm","Crying at Pixar","14 named plants","Getting lost in Paris","The first date",
+    "Dana's alarm clock","One more episode","The lost passport","Goat selfie","The plant named Steve"],
+  "Party mix": ["Wedding cake","First dance","Bouquet toss","Honeymoon","Shake It Off","Eiffel Tower","McDreamy",
+    "Champagne","Veil","Limousine","Selfie","Dance floor","Rom-com","Pinky promise","Best friends",
+    "Cocktail","Disco ball","Tiara","Love song","Engagement party","Spa day","Photo booth","Sunglasses",
+    "Bachelorette","Happily ever after"]
+};
+const CATS = ["Everything", ...Object.keys(DECK)];
+let cat = "Everything", roundLen = 60;
+let pool = [], round = [], current = null, t = 0, timerId = null, playing = false, lock = false;
+let stats = { rounds: 0, correct: 0, passed: 0 };
+
+const $ = id => document.getElementById(id);
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// category chips
+CATS.forEach(c => {
+  const b = document.createElement('button');
+  b.className = 'chip' + (c === cat ? ' sel' : ''); b.textContent = c;
+  b.onclick = () => { cat = c; document.querySelectorAll('#cats .chip').forEach(x => x.classList.toggle('sel', x === b)); pool = []; };
+  $('cats').appendChild(b);
+});
+document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
+  roundLen = +b.dataset.t; document.querySelectorAll('[data-t]').forEach(x => x.classList.toggle('sel', x === b));
+});
+
+function buildPool() {
+  const items = [];
+  for (const [c, words] of Object.entries(DECK)) if (cat === "Everything" || cat === c) words.forEach(w => items.push({ w, c }));
+  return shuffle(items);
+}
+function nextCard() {
+  if (!pool.length) pool = buildPool();          // deck finished: reshuffle
+  current = pool.pop();
+  $('card').textContent = current.w; $('cat').textContent = current.c;
+}
+
+// sound (Web Audio, unlocked by the Start tap)
+let ac = null;
+function beep(f, d = 0.12) {
+  try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(0.2, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d);
+    o.start(); o.stop(ac.currentTime + d); } catch (e) {}
+}
+function buzz(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+
+// keep screen awake
+let wake = null;
+async function keepAwake() { try { wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function releaseAwake() { try { wake && wake.release(); } catch (e) {} wake = null; }
+
+// tilt: devicemotion gravity on the axis through the screen
+let tiltReady = false, neutral = true;
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+async function askMotion() {
+  try {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      tiltReady = (await DeviceMotionEvent.requestPermission()) === 'granted';
+    } else tiltReady = 'DeviceMotionEvent' in window;
+  } catch (e) { tiltReady = false; }
+}
+window.addEventListener('devicemotion', e => {
+  if (!playing || !tiltReady || !e.accelerationIncludingGravity) return;
+  let z = e.accelerationIncludingGravity.z; if (z == null) return;
+  if (isIOS) z = -z;                              // iOS reports the opposite sign
+  if (Math.abs(z) < 3) { neutral = true; return; }
+  if (!neutral) return;
+  if (z < -6) { neutral = false; mark(true); }    // screen toward floor → correct
+  else if (z > 6) { neutral = false; mark(false); } // screen toward ceiling → pass
+});
+
+// taps
+$('play').addEventListener('pointerdown', e => { if (!playing) return; mark(e.clientX > window.innerWidth / 2); });
+
+function mark(good) {
+  if (lock || !playing) return; lock = true;
+  round.push({ w: current.w, good });
+  $('score').textContent = round.filter(r => r.good).length;
+  $('play').classList.add(good ? 'flash-good' : 'flash-pass');
+  $('card').textContent = good ? 'Correct!' : 'Pass';
+  good ? (beep(880), buzz(60)) : (beep(220), buzz([30, 40, 30]));
+  setTimeout(() => { $('play').classList.remove('flash-good', 'flash-pass'); if (playing) nextCard(); lock = false; }, 650);
+}
+
+async function startRound() {
+  beep(660, 0.05);
+  await askMotion(); keepAwake();
+  round = []; show('ready');
+  let n = 3; $('count').textContent = n;
+  const cd = setInterval(() => {
+    n--; if (n > 0) { $('count').textContent = n; beep(520, 0.08); return; }
+    clearInterval(cd); beginPlay();
+  }, 1000);
+}
+function beginPlay() {
+  if (!pool.length) pool = buildPool();
+  t = roundLen; $('timer').textContent = t; $('timer').classList.remove('low'); $('score').textContent = 0;
+  show('play'); playing = true; neutral = true; nextCard(); beep(990, 0.15);
+  timerId = setInterval(() => {
+    t--; $('timer').textContent = t;
+    if (t <= 5) { $('timer').classList.add('low'); beep(400, 0.05); }
+    if (t <= 0) endRound();
+  }, 1000);
+}
+function endRound() {
+  clearInterval(timerId); playing = false; releaseAwake(); beep(300, 0.4);
+  // the card on screen when time ran out counts as passed
+  if (current && !lock) round.push({ w: current.w, good: false });
+  const g = round.filter(r => r.good).length;
+  stats.rounds++; stats.correct += g; stats.passed += round.length - g;
+  $('res-score').textContent = g; $('res-sub').textContent = g === 1 ? 'correct' : 'correct';
+  $('res-list').innerHTML = round.map(r => `<li class="${r.good ? 'g' : 'p'}">${r.good ? '✓' : '–'} ${r.w.replace(/</g, '&lt;')}</li>`).join('');
+  show('results');
+}
+
+$('go').onclick = startRound;
+$('next').onclick = startRound;
+$('finish').onclick = () => show('survey');
+["Nothing", "Up to 5 USD", "5–10 USD", "More than 10 USD"].forEach(o => {
+  const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = o;
+  b.onclick = () => { $('end-note').textContent = `Prototype: your answer "${o}" would be saved here. Rounds played: ${stats.rounds}, correct: ${stats.correct}.`; show('end'); };
+  $('opts').appendChild(b);
+});
+$('again').onclick = () => show('start');
+$('make').onclick = () => { $('end-note').textContent = 'Prototype: this button will open the questionnaire.'; };
+</script>
+</body>
+</html>
