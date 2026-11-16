@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starring You – the party game about your favorite person</title>
+<meta name="description" content="Answer a few questions about the guest of honor and get a forehead-guessing party game built from their people, obsessions and inside jokes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  :root { --night:#150810; --plum:#2a0f1f; --velvet:#b3122d; --gold:#ffc94a; --cream:#fff3dc; --dim:#c9a9b4;
+    --card-bg:#fff3dc; --card-ink:#150810; --card-accent:#b3122d; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--night); color:var(--cream); font:400 17px/1.55 "DM Sans",system-ui,sans-serif; }
+  a { color:inherit; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 22px; }
+  .display { font-family:"Bowlby One",Impact,sans-serif; font-weight:400; line-height:1.02; letter-spacing:.01em; text-transform:uppercase; }
+  .script { font-family:"DM Serif Display",Georgia,serif; font-style:italic; color:var(--gold); }
+  .kicker { font-weight:700; font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); }
+
+  nav { display:flex; justify-content:space-between; align-items:center; padding:18px 0; }
+  .logo { font-family:"Bowlby One",sans-serif; font-size:19px; letter-spacing:.06em; text-decoration:none; }
+  .logo b { color:var(--gold); font-weight:400; }
+  .btn { display:inline-block; background:var(--gold); color:var(--night); font-weight:700; text-decoration:none;
+    padding:14px 26px; border-radius:999px; box-shadow:0 5px 0 #b98a1c; transition:transform .1s; }
+  .btn:hover { transform:translateY(-2px); } .btn:active { transform:translateY(3px); box-shadow:0 2px 0 #b98a1c; }
+  .btn.sm { padding:9px 18px; font-size:14px; box-shadow:0 3px 0 #b98a1c; }
+  .btn.line { background:transparent; color:var(--cream); box-shadow:none; border:2px solid var(--dim); }
+
+  /* hero: theater marquee */
+  .hero { padding:26px 0 70px; background:radial-gradient(ellipse at 50% -10%, #5a1730 0%, var(--night) 62%); }
+  .marquee { position:relative; margin:18px auto 44px; max-width:760px; padding:16px; border-radius:18px; background:var(--velvet);
+    box-shadow:0 0 70px rgba(255,201,74,.25), 0 18px 0 #6e0b1c; }
+  .marquee::before, .marquee::after { content:""; position:absolute; inset:0; border-radius:18px; pointer-events:none;
+    background:radial-gradient(circle, #fff6d0 0 3.5px, transparent 4.5px) 0 0/24px 24px; animation:blink 1.4s steps(1) infinite; }
+  .marquee::after { background-position:12px 12px; animation-delay:.7s; }
+  @keyframes blink { 50% { opacity:.25; } }
+  .board { position:relative; z-index:1; background:var(--cream); color:var(--night); border-radius:8px; padding:26px 18px 30px; text-align:center; }
+  .board .kicker { color:var(--velvet); }
+  .name { font-size:clamp(44px,11vw,104px); margin:6px 0 0; min-height:1.05em; }
+  .name span { display:inline-block; animation:drop .5s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes drop { from { transform:translateY(-30%) rotate(-3deg); opacity:0; } }
+  .hero-grid { display:grid; grid-template-columns:1.15fr 1fr; gap:44px; align-items:center; }
+  h1 { font-size:clamp(30px,4.6vw,50px); margin:0 0 16px; }
+  .lead { color:var(--dim); font-size:19px; margin:0 0 26px; max-width:30em; }
+  .cta { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .fine { font-size:14px; color:var(--dim); margin-top:14px; }
+
+  /* phone held sideways */
+  .phone { width:min(420px,100%); aspect-ratio:2.05/1; margin:0 auto; background:#000; border-radius:34px; padding:11px;
+    box-shadow:0 30px 60px rgba(0,0,0,.6), 0 0 0 2px #3a2630; transform:rotate(-4deg); }
+  .screen { height:100%; border-radius:24px; background:var(--card-bg); color:var(--card-ink); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:10px 18px; position:relative; transition:background .25s,color .25s; }
+  .screen.hit { background:#2ecc71 !important; color:#fff !important; }
+  .screen small { position:absolute; top:12px; left:0; right:0; font-weight:700; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--card-accent); }
+  .screen .t { position:absolute; top:8px; right:16px; font-family:"Bowlby One"; font-size:17px; color:var(--card-accent); }
+  .word { font-family:"Bowlby One",sans-serif; text-transform:uppercase; font-size:clamp(20px,5.2vw,34px); line-height:1.05; }
+  .caption { text-align:center; color:var(--dim); font-size:14px; margin-top:22px; }
+
+  section { padding:74px 0; }
+  h2 { font-size:clamp(28px,4.4vw,46px); margin:10px 0 14px; }
+  .sub { color:var(--dim); max-width:36em; margin:0 0 34px; }
+
+  /* generic vs theirs */
+  .versus { background:var(--plum); }
+  .duel { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .pile { border-radius:16px; padding:24px; }
+  .pile.any { border:2px dashed #6b4a58; color:var(--dim); }
+  .pile.theirs { background:var(--cream); color:var(--night); box-shadow:0 10px 0 var(--gold); }
+  .pile h3 { margin:0 0 14px; font-size:14px; letter-spacing:.18em; text-transform:uppercase; }
+  .pile ul { list-style:none; padding:0; margin:0; }
+  .pile li { font-family:"Bowlby One",sans-serif; text-transform:uppercase; font-size:clamp(17px,2.6vw,24px); padding:9px 0; border-top:1px solid rgba(128,128,128,.3); }
+  .pile.any li { opacity:.55; }
+
+  /* three acts */
+  .acts { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .act { border-top:4px solid var(--gold); padding-top:18px; }
+  .act .n { font-family:"Bowlby One"; color:var(--gold); font-size:15px; letter-spacing:.14em; }
+  .act h3 { font-size:22px; margin:8px 0 8px; }
+  .act p { color:var(--dim); margin:0; }
+
+  /* themes */
+  .looks { background:var(--plum); }
+  .look-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; }
+  .swatches { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 20px; }
+  .sw { border:2px solid transparent; border-radius:999px; padding:9px 16px 9px 10px; background:#3b1a2b; color:var(--cream); font:700 14px "DM Sans"; cursor:pointer; display:flex; align-items:center; gap:8px; }
+  .sw i { width:18px; height:18px; border-radius:50%; display:inline-block; border:2px solid rgba(255,255,255,.5); }
+  .sw.on { border-color:var(--gold); }
+  .ticks { list-style:none; padding:0; margin:0; color:var(--dim); }
+  .ticks li { padding:5px 0 5px 26px; position:relative; }
+  .ticks li::before { content:"★"; position:absolute; left:0; color:var(--gold); }
+
+  /* tickets */
+  .tickets { display:grid; grid-template-columns:1fr 1fr; gap:22px; max-width:820px; }
+  .ticket { background:var(--cream); color:var(--night); border-radius:14px; padding:26px; position:relative;
+    -webkit-mask:radial-gradient(circle 12px at 0 50%, transparent 98%, #000) left/51% 100% no-repeat, radial-gradient(circle 12px at 100% 50%, transparent 98%, #000) right/51% 100% no-repeat;
+            mask:radial-gradient(circle 12px at 0 50%, transparent 98%, #000) left/51% 100% no-repeat, radial-gradient(circle 12px at 100% 50%, transparent 98%, #000) right/51% 100% no-repeat; }
+  .ticket.gold { background:var(--gold); }
+  .ticket h3 { margin:0; font-size:14px; letter-spacing:.18em; text-transform:uppercase; }
+  .price { font-family:"Bowlby One"; font-size:44px; margin:6px 0 2px; }
+  .ticket p { margin:0 0 14px; font-size:15px; }
+  .ticket ul { margin:0; padding-left:18px; font-size:15px; }
+  .ticket li { margin:4px 0; }
+
+  details { border-top:1px solid #4a2a39; padding:16px 0; max-width:760px; }
+  summary { cursor:pointer; font-weight:700; font-size:18px; }
+  details p { color:var(--dim); margin:10px 0 0; }
+
+  .finale { text-align:center; background:radial-gradient(ellipse at 50% 120%, #5a1730 0%, var(--night) 65%); }
+  .credits { color:var(--dim); font-size:13px; letter-spacing:.2em; text-transform:uppercase; line-height:2.1; margin-top:44px; }
+  .credits b { color:var(--cream); }
+
+  @media (max-width:780px) {
+    .hero-grid, .duel, .acts, .look-grid, .tickets { grid-template-columns:1fr; }
+    section { padding:54px 0; } .phone { transform:rotate(-2deg); }
+  }
+  @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <nav>
+      <a class="logo" href="#">Starring <b>You</b></a>
+      <a class="btn sm" href="prototype/">Try a sample</a>
+    </nav>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="board">
+        <div class="kicker">Tonight only · Now showing</div>
+        <div class="display name" id="name"><span>Emma</span></div>
+      </div>
+    </div>
+
+    <div class="hero-grid">
+      <div>
+        <h1 class="display">The party game where your friend is the whole show</h1>
+        <p class="lead">Tell us about the guest of honor. We turn their people, obsessions and inside jokes into a guessing game everyone plays on their own phone. No app to install.</p>
+        <div class="cta">
+          <a class="btn" href="prototype/">Make their game</a>
+          <a class="btn line" href="prototype/">Play a sample</a>
+        </div>
+        <p class="fine">Ready in about 3 minutes · Works on iPhone and Android</p>
+      </div>
+      <div>
+        <div class="phone"><div class="screen" id="demo"><small id="demo-cat">Inside jokes</small><span class="t" id="demo-t">47</span><div class="word" id="demo-word">The Paris goat farm</div></div></div>
+        <p class="caption">One player holds the phone to their forehead. Everyone else shouts clues.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="versus">
+  <div class="wrap">
+    <div class="kicker">Why it lands</div>
+    <h2 class="display">Nobody laughs at <span class="script" style="text-transform:none">"elephant"</span></h2>
+    <p class="sub">Store-bought decks are about nothing. This one is about the person everyone in the room came for.</p>
+    <div class="duel">
+      <div class="pile any"><h3>Any party game</h3><ul><li>Elephant</li><li>Pizza</li><li>Eiffel Tower</li><li>Famous singer</li></ul></div>
+      <div class="pile theirs"><h3>Emma's game</h3><ul><li>The Paris goat farm</li><li>"I'll just have one drink"</li><li>Mr. Whiskers</li><li>Crying at Pixar on a first date</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2 class="display">A show in three acts</h2>
+    <div class="acts">
+      <div class="act"><div class="n">ACT I</div><h3>Spill the details</h3><p>Six quick questions: who they love, what they can't stop talking about, the stories that always come up.</p></div>
+      <div class="act"><div class="n">ACT II</div><h3>We write the deck</h3><p>You get 60 cards made for them. Delete the duds, add your own, or skip the writing and paste your own word list.</p></div>
+      <div class="act"><div class="n">ACT III</div><h3>Pass the phone</h3><p>Send one link to the group chat. Tilt down when you guess it, tilt up to pass. Sixty seconds on the clock.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="looks">
+  <div class="wrap look-grid">
+    <div>
+      <div class="kicker">Make it theirs</div>
+      <h2 class="display">Dressed for the occasion</h2>
+      <p class="sub" style="margin-bottom:20px">The words are theirs. The look can be too. Tap a style:</p>
+      <div class="swatches" id="swatches"></div>
+      <ul class="ticks">
+        <li>Their name on the title screen</li>
+        <li>Their photo on the opening and closing screens</li>
+        <li>Your party's color</li>
+        <li>A closing message from all of you</li>
+      </ul>
+    </div>
+    <div><div class="phone" style="transform:rotate(3deg)"><div class="screen" id="look"><small>All about Em</small><span class="t">32</span><div class="word">Oat milk latte</div></div></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Admission</div>
+    <h2 class="display">Pay once per party</h2>
+    <p class="sub">No subscription, no account. Everyone at the party plays on one ticket.</p>
+    <div class="tickets">
+      <div class="ticket"><h3>Matinee</h3><div class="price">Free</div><p>Bring your own words.</p><ul><li>Type or paste your word list</li><li>Add ready-made word packs</li><li>Classic look</li></ul></div>
+      <div class="ticket gold"><h3>Premiere</h3><div class="price">$9.99</div><p>We write it and dress it up.</p><ul><li>60 cards written from your answers</li><li>Every style, color and their photo</li><li>Edit any time before the party</li><li>Preview 10 cards before you pay</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="kicker">Good to know</div>
+    <h2 class="display">Questions</h2>
+    <details><summary>Do my guests need to download anything?</summary><p>No. They open the link in their phone's browser and play.</p></details>
+    <details><summary>What kind of party is it for?</summary><p>Birthdays, bachelorette and bachelor parties, weddings, farewells, family reunions. Anything with a guest of honor.</p></details>
+    <details><summary>Can I keep it family friendly?</summary><p>Yes. Family friendly is the default. You choose if you want it a little cheekier, and you approve every card.</p></details>
+    <details><summary>What happens to what I write about my friend?</summary><p>It is used only to make your game. Games are deleted after 90 days, and you can delete yours any time.</p></details>
+  </div>
+</section>
+
+<section class="finale">
+  <div class="wrap">
+    <h2 class="display">Give them <span class="script" style="text-transform:none">top billing</span></h2>
+    <p class="sub" style="margin:0 auto 28px">Three minutes now. The loudest ten minutes of the party later.</p>
+    <a class="btn" href="prototype/">Make their game</a>
+    <div class="credits">Directed by <b>you</b> · Starring <b>them</b> · Supporting cast <b>everyone they love</b><br>© Starring You</div>
+  </div>
+</section>
+
+<script>
+// marquee names
+const names = ["Emma","Grandpa Joe","Maya","Coach Dan","Aunt Rosa","Liam"]; let ni = 0;
+setInterval(() => { ni = (ni + 1) % names.length; document.getElementById('name').innerHTML = '<span>' + names[ni] + '</span>'; }, 2600);
+
+// hero demo: cards get guessed
+const cards = [["Inside jokes","The Paris goat farm"],["All about Em","Mr. Whiskers"],["All about Em","Josh's proposal"],
+  ["Inside jokes","14 named plants"],["Party mix","Bouquet toss"],["All about Em","Oat milk latte"]];
+let ci = 0, t = 47; const demo = document.getElementById('demo'), w = document.getElementById('demo-word'), c = document.getElementById('demo-cat'), tt = document.getElementById('demo-t');
+setInterval(() => { t = t > 1 ? t - 1 : 60; tt.textContent = t; }, 1000);
+setInterval(() => {
+  demo.classList.add('hit'); w.textContent = 'Correct!';
+  setTimeout(() => { ci = (ci + 1) % cards.length; demo.classList.remove('hit'); c.textContent = cards[ci][0]; w.textContent = cards[ci][1]; }, 700);
+}, 3200);
+
+// style picker
+const looks = { Glam:["#111","#ffc94a","#ffc94a"], Pastel:["#ffe3ec","#4a2a4d","#d6558a"], Neon:["#1b0b3a","#39ffb6","#ff4fd8"],
+  Garden:["#eef5e4","#234d2c","#c2543d"], Beach:["#fff1d6","#0c5c75","#ff7a4d"], Retro:["#f4d35e","#3d1e6d","#d7263d"] };
+const look = document.getElementById('look'), sw = document.getElementById('swatches');
+Object.entries(looks).forEach(([n, [bg, ink, acc]], i) => {
+  const b = document.createElement('button'); b.className = 'sw' + (i ? '' : ' on'); b.type = 'button';
+  b.innerHTML = '<i style="background:' + bg + ';border-color:' + acc + '"></i>' + n;
+  b.onclick = () => { look.style.setProperty('--card-bg', bg); look.style.setProperty('--card-ink', ink); look.style.setProperty('--card-accent', acc);
+    sw.querySelectorAll('.sw').forEach(x => x.classList.toggle('on', x === b)); };
+  sw.appendChild(b); if (!i) b.onclick();
+});
+</script>
+</body>
+</html>

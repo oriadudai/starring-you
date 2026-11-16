@@ -35,6 +35,12 @@
   .note { margin-top: 16px; font-size: 12px; color: var(--muted); max-width: 440px; line-height: 1.5; }
 
   #play { padding: 0; }
+  /* Game screens are always sideways. If the browser stays upright (rotation lock on), the content is turned instead. */
+  .rot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  @media (orientation: portrait) {
+    .rot { inset: auto; left: 50%; top: 50%; width: 100vh; height: 100vw; transform: translate(-50%, -50%) rotate(90deg); }
+    #card { font-size: clamp(36px, 11vh, 96px) !important; }
+  }
   #card { font-family: Fredoka, sans-serif; font-weight: 700; font-size: clamp(36px, 11vw, 96px);
     line-height: 1.05; padding: 0 6vw; max-width: 100%; word-wrap: break-word; }
   #cat { position: absolute; top: 14px; left: 0; right: 0; font-size: 13px; letter-spacing: .15em;
@@ -72,23 +78,27 @@
     <button class="chip" data-t="90">90s</button>
   </div>
   <button class="btn" id="go">Start</button>
-  <p class="note">Prototype. Tap the right half for <b>Correct</b>, the left half for <b>Pass</b>. Hold the phone upright: tilt down for <b>Correct</b>, up for <b>Pass</b>. Tilting works only on the game's own website, not inside the Claude preview.</p>
+  <p class="note">Prototype. Tap the right half for <b>Correct</b>, the left half for <b>Pass</b>. Hold the phone sideways: tilt down for <b>Correct</b>, up for <b>Pass</b>. Tilting works only on the game's own website, not inside the Claude preview.</p>
 </section>
 
 <!-- GET READY -->
 <section id="ready" class="screen">
-  <div id="count">3</div>
-  <div id="ready-text">Hold the phone upright to your forehead, screen facing your friends</div>
+  <div class="rot">
+    <div id="count">3</div>
+    <div id="ready-text">Turn the phone sideways so this reads straight, then hold it to your forehead</div>
+  </div>
 </section>
 
 <!-- PLAY -->
 <section id="play" class="screen">
-  <div id="score">0</div>
-  <div id="cat"></div>
-  <div id="timer">60</div>
-  <div id="card"></div>
-  <div class="zone l">◀ Pass</div>
-  <div class="zone r">Correct ▶</div>
+  <div class="rot">
+    <div id="score">0</div>
+    <div id="cat"></div>
+    <div id="timer">60</div>
+    <div id="card"></div>
+    <div class="zone l">◀ Pass</div>
+    <div class="zone r">Correct ▶</div>
+  </div>
 </section>
 
 <!-- RESULTS -->
@@ -203,7 +213,11 @@ window.addEventListener('devicemotion', e => {
 });
 
 // taps
-$('play').addEventListener('pointerdown', e => { if (!playing) return; mark(e.clientX > window.innerWidth / 2); });
+$('play').addEventListener('pointerdown', e => {
+  if (!playing) return;
+  const turned = window.innerHeight > window.innerWidth;   // content is rotated 90deg: its right half is the bottom of the screen
+  mark(turned ? e.clientY > window.innerHeight / 2 : e.clientX > window.innerWidth / 2);
+});
 
 function mark(good) {
   if (lock || !playing) return; lock = true;
